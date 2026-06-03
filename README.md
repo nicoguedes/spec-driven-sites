@@ -167,11 +167,14 @@ apps/example/app/
 packages/ui/src/
   ads.tsx  theme.tsx  seo.ts  layout.tsx  monitoring.tsx   shared, env-gated, no secrets
 scripts/new-site.mjs                 scaffold a new app from example
+.claude/skills/                      bundled authoring skills (new-website · new-tool)
 docs/process/                        spec-driven workflow + agent roles
 docs/templates/                      site-prd + task templates
 .github/                             ci.yml · agent.yml · issue forms
 CONSTITUTION.md  CLAUDE.md           the rules + per-project agent conventions
 ```
+
+The bundled `.claude/skills/` are copies from the canonical [`claude-code-skills`](https://github.com/nicoguedes/claude-code-skills) collection — pull updates from there.
 
 ---
 
