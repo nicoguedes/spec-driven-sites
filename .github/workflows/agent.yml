@@ -1,0 +1,98 @@
+# The "ship a site from your phone" agent loop.
+#
+# Comment a mention (e.g. `@agent implement this`) on a task Issue, and a coding
+# agent picks up the work, opens a PR, and lets CI gates run. The single human
+# step remains the merge — agents never merge themselves
+# (see CONSTITUTION.md, prime directive #3).
+#
+# This is a SKELETON. You must wire two things:
+#   1. The coding-agent step (marked TODO below) — point it at the agent action
+#      or CLI you use.
+#   2. A secret for that agent's API key, stored as a *repository secret*
+#      (Settings ▸ Secrets and variables ▸ Actions). NEVER hardcode a token here.
+#
+# See: docs/process/spec-driven-workflow.md ("the agent loop").
+
+name: agent
+
+on:
+  issue_comment:
+    types: [created]
+
+# Least-privilege by default. The agent needs to read the Issue and open a PR.
+permissions:
+  contents: write        # create a branch + commits
+  issues: write          # comment back on the Issue
+  pull-requests: write   # open the PR
+
+jobs:
+  dispatch:
+    name: dispatch coding agent
+    runs-on: ubuntu-latest
+
+    # Only run when a trusted human mentions the agent on an Issue (not a PR).
+    if: >
+      github.event.issue.pull_request == null &&
+      contains(github.event.comment.body, '@agent') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: pnpm
+
+      - name: Create working branch
+        run: |
+          BRANCH="feat/agent-issue-${{ github.event.issue.number }}"
+          git config user.name  "agent"
+          git config user.email "agent@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          echo "BRANCH=$BRANCH" >> "$GITHUB_ENV"
+
+      # ----------------------------------------------------------------------
+      # TODO: wire up your coding agent here.
+      #
+      # The agent should:
+      #   - read the Issue body as its spec (the Issue IS the spec),
+      #   - implement the tool/locale/SEO change against the acceptance criteria,
+      #     following CLAUDE.md (static-export rules, i18n slug mapping, no ad
+      #     placeholders, env-only secrets),
+      #   - run `pnpm install` then `pnpm --filter <app> build` to prove it,
+      #   - commit to $BRANCH.
+      #
+      # Provide its credential from a repo secret — for example:
+      #
+      #   - name: Run coding agent
+      #     uses: <org>/<coding-agent-action>@<version>
+      #     with:
+      #       issue: ${{ github.event.issue.number }}
+      #       prompt: ${{ github.event.issue.body }}
+      #     env:
+      #       AGENT_API_KEY: ${{ secrets.AGENT_API_KEY }}   # <-- store in repo secrets
+      # ----------------------------------------------------------------------
+      - name: Run coding agent (placeholder)
+        run: |
+          echo "TODO: invoke your coding agent against issue #${{ github.event.issue.number }}."
+          echo "It must commit its work to $BRANCH and keep the static build green."
+
+      - name: Open a draft PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git push -u origin "$BRANCH"
+          gh pr create \
+            --draft \
+            --title "feat: address #${{ github.event.issue.number }}" \
+            --body "Automated draft for #${{ github.event.issue.number }}. Closes #${{ github.event.issue.number }}.
+
+          CI gates (lint · typecheck · build · Lighthouse) must pass and a human must approve before merge (CONSTITUTION.md)." \
+            --head "$BRANCH"

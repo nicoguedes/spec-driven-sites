@@ -1,0 +1,43 @@
+# Secrets & env — NEVER commit these (see CONSTITUTION.md). Use env / a secret manager.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Dependencies
+node_modules/
+
+# Next.js / build output
+.next/
+out/
+dist/
+build/
+
+# Turborepo
+.turbo/
+
+# Cloudflare / Wrangler
+.wrangler/
+
+# Test & coverage artifacts
+coverage/
+playwright-report/
+test-results/
+.lighthouseci/
+
+# Git worktrees created by the workflow
+wt-*/
+
+# Editor / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
